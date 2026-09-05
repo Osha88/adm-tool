@@ -1,0 +1,31 @@
+﻿# Автоматически определять язык
+*.py linguist-language=Python
+*.html linguist-language=HTML
+*.js linguist-language=JavaScript
+*.css linguist-language=CSS
+
+# Фиксация авторства
+*.py ident
+*.html ident
+*.js ident
+*.css ident
+*.md ident
+*.txt ident
+
+# Обработка окончаний строк
+* text=auto
+
+# Исключить из статистики
+venv/ linguist-vendored
+__pycache__/ linguist-generated
+
+# Бинарные файлы
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.sqlite binary
+*.db binary
