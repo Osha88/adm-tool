@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Рабочая панель — ADM-Tool</title>
+
+    <!-- ============================================================ -->
+    <!-- === СТИЛИ === -->
+    <!-- ============================================================ -->
+    <style>
+        /* === БЛОК 1: ОБЩИЕ СТИЛИ === */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === БЛОК 2: ШАПКА === */
+        .header {
+            background: #2a2a2a;
+            border-bottom: 1px solid #00ff00;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; }
+        .header .user-info { font-size: 14px; color: #ffaa00; margin-right: 15px; }
+        .header button {
+            background: #2a2a2a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-left: 8px;
+        }
+        .header button:hover { background: #00ff00; color: #1e1e1e; }
+
+        /* === БЛОК 3: ВКЛАДКИ === */
+        .tabs {
+            display: flex;
+            background: #222;
+            border-bottom: 1px solid #444;
+            padding: 0 30px;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            color: #888;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+        }
+        .tab:hover { color: #00ff00; }
+        .tab.active {
+            color: #00ff00;
+            border-bottom-color: #00ff00;
+        }
+
+        /* === БЛОК 4: ПАНЕЛИ === */
+        .panel { display: none; flex: 1; flex-direction: column; }
+        .panel.active { display: flex; }
+
+        /* === БЛОК 5: ПАНЕЛЬ УПРАВЛЕНИЯ (КОНСОЛЬ) === */
+        .controls {
+            padding: 12px 30px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #333;
+        }
+        .controls select,
+        .controls input,
+        .controls button {
+            padding: 8px 14px;
+            background: #2a2a2a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .controls button { cursor: pointer; }
+        .controls button:hover { background: #00ff00; color: #1e1e1e; }
+        .controls input { background: #1e1e1e; width: 160px; }
+        .status { color: #ffaa00; font-size: 13px; }
+
+        /* === БЛОК 6: МАКРОСЫ === */
+        .macros {
+            padding: 10px 30px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #333;
+        }
+        .macros button {
+            padding: 6px 12px;
+            background: #2a2a2a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .macros button:hover { background: #00ff00; color: #1e1e1e; }
+        .macros button.danger { color: #ff4444; border-color: #ff4444; }
+        .macros button.danger:hover { background: #ff4444; color: #1e1e1e; }
+        .macros button.map-btn { color: #00ffff; border-color: #00ffff; }
+        .macros button.map-btn:hover { background: #00ffff; color: #1e1e1e; }
+
+        /* === БЛОК 7: КОНСОЛЬ === */
+        .console-wrapper {
+            flex: 1;
+            margin: 15px 30px;
+            background: black;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 400px;
+        }
+        #output {
+            flex: 1;
+            color: #00ff00;
+            font-size: 14px;
+            white-space: pre;
+            overflow: auto;
+            padding: 8px;
+            background: black;
+            border: none;
+            resize: none;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+        }
+        #input-line {
+            display: flex;
+            gap: 8px;
+            padding: 8px 0 0 0;
+            border-top: 1px solid #333;
+        }
+        #prompt {
+            color: #00ff00;
+            font-size: 14px;
+        }
+        #cmdInput {
+            flex: 1;
+            background: #1e1e1e;
+            color: #00ff00;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            padding: 4px 8px;
+        }
+
+        /* === БЛОК 8: КАРТА === */
+        .map-wrapper {
+            flex: 1;
+            margin: 15px 30px;
+            position: relative;
+            background: #111;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
+        .map-container {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .map-image {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
+            filter: invert(1) hue-rotate(90deg);
+            mix-blend-mode: screen;
+            opacity: 0.6;
+        }
+
+        /* === БЛОК 9: ТОЧКИ НА КАРТЕ === */
+        .map-point {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            border: 2px solid #1e1e1e;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+            transition: transform 0.2s;
+        }
+        .map-point:hover {
+            transform: translate(-50%, -50%) scale(1.5);
+            z-index: 10;
+        }
+        .map-point.green { background: #00ff00; }
+        .map-point.yellow { background: #ffaa00; }
+        .map-point.red { background: #ff4444; }
+
+        /* === БЛОК 10: ПОДСКАЗКА К ТОЧКЕ === */
+        .map-point-tooltip {
+            position: absolute;
+            background: #2a2a2a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 10px 14px;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: nowrap;
+            pointer-events: none;
+            transform: translate(-50%, -120%);
+            display: none;
+            z-index: 20;
+            box-shadow: 0 0 12px rgba(0, 255, 0, 0.5);
+        }
+        .map-point:hover + .map-point-tooltip,
+        .map-point-tooltip.visible { display: block; }
+
+        /* === БЛОК 11: МОДАЛЬНОЕ ОКНО === */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #2a2a2a;
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .modal-content h3 {
+            color: #00ff00;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            display: block;
+            color: #00ff00;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            background: #1e1e1e;
+            color: #00ff00;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #00ff00; }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .btn-save {
+            background: #00ff00;
+            color: #1e1e1e;
+            border: none;
+            font-weight: bold;
+        }
+        .btn-save:hover { background: #00cc00; }
+        .btn-cancel {
+            background: #2a2a2a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+        .btn-cancel:hover { background: #00ff00; color: #1e1e1e; }
+        .error { color: #ff4444; font-size: 12px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- === БЛОК 12: ШАПКА === -->
+    <!-- ============================================================ -->
+    <div class="header">
+        <h1>🚀 ADM-Tool</h1>
+        <div>
+            <span class="user-info" id="userInfo">—</span>
+            <button id="adminBtn" style="display:none;" onclick="goToAdmin()">🔑 Админ-панель</button>
+            <button onclick="doLogout()">Выйти</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- === БЛОК 13: ВКЛАДКИ === -->
+    <!-- ============================================================ -->
+    <div class="tabs">
+        <div class="tab active" id="tab-console" onclick="showTab('console')">🖥 Консоль</div>
+        <div class="tab" id="tab-map" onclick="showTab('map')">🗺️ Карта серверов</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- === БЛОК 14: ПАНЕЛЬ «КОНСОЛЬ» === -->
+    <!-- ============================================================ -->
+    <div class="panel active" id="panel-console">
+
+        <!-- === Управление === -->
+        <div class="controls">
+            <select id="deviceSelect">
+                <option value="">— Выберите сервер —</option>
+            </select>
+            <input type="password" id="passwordInput" placeholder="Пароль SSH" />
+            <button onclick="switchDevice()">🔌 Подключиться</button>
+            <button onclick="openServerModal()">+ Добавить сервер</button>
+            <button onclick="deleteCurrentServer()">🗑 Удалить сервер</button>
+            <span class="status" id="sshStatus">Статус: не подключено</span>
+        </div>
+
+        <!-- === Макросы === -->
+        <div class="macros">
+            <button onclick="runMacro('uptime && df -h && free -m')">📊 Статус</button>
+            <button onclick="runMacro('ip route && ping -c 2 8.8.8.8')">🌐 Сеть</button>
+            <button onclick="runMacro('ls -la /var/log | tail -10')">📁 Логи</button>
+            <button class="danger" onclick="runMacro('systemctl restart apache2')">🔄 Перезагрузить Apache</button>
+            <button onclick="visualizeRoute()" style="color:#00ffff; border-color:#00ffff;">🗺️ Визуализировать маршрут</button>
+            <button class="map-btn" onclick="showTab('map')">🗺️ Карта серверов</button>
+        </div>
+
+        <!-- === Консоль === -->
+        <div class="console-wrapper">
+            <pre id="output">Ожидание подключения...</pre>
+            <div id="input-line">
+                <span id="prompt">&gt; </span>
+                <input type="text" id="cmdInput" autofocus />
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- === БЛОК 15: ПАНЕЛЬ «КАРТА СЕРВЕРОВ» === -->
+    <!-- ============================================================ -->
+    <div class="panel" id="panel-map">
+
+        <div class="controls">
+            <button onclick="loadMap()">🔄 Обновить сейчас</button>
+            <span class="status" id="mapStatus">Автообновление: раз в 5 минут</span>
+        </div>
+
+        <div class="map-wrapper">
+            <div class="map-container" id="mapContainer">
+                <img src="/static/russia.jpg" class="map-image" alt="Карта России" />
+                <!-- Точки будут добавляться сюда -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- === БЛОК 16: МОДАЛЬНОЕ ОКНО «ДОБАВИТЬ СЕРВЕР» === -->
+    <!-- ============================================================ -->
+    <div class="modal" id="serverModal">
+        <div class="modal-content">
+            <h3>Добавить сервер</h3>
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" id="srvName" />
+            </div>
+            <div class="form-group">
+                <label>IP-адрес или домен</label>
+                <input type="text" id="srvHost" />
+            </div>
+            <div class="form-group">
+                <label>Порт SSH</label>
+                <input type="number" id="srvPort" value="22" />
+            </div>
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" id="srvUser" value="root" />
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="text" id="srvPass" />
+            </div>
+            <div class="form-group">
+                <label>Регион</label>
+                <select id="srvRegion">
+                    <option value="">— Не указан —</option>
+                    <option value="Центральный">Центральный</option>
+                    <option value="Северо-Западный">Северо-Западный</option>
+                    <option value="Южный">Южный</option>
+                    <option value="Северо-Кавказский">Северо-Кавказский</option>
+                    <option value="Приволжский">Приволжский</option>
+                    <option value="Уральский">Уральский</option>
+                    <option value="Сибирский">Сибирский</option>
+                    <option value="Дальневосточный">Дальневосточный</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Город (опционально)</label>
+                <input type="text" id="srvCity" />
+            </div>
+            <div class="error" id="serverError"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeServerModal()">Отмена</button>
+                <button class="btn-save" onclick="saveServer()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- === БЛОК 17: СКРИПТЫ === -->
+    <!-- ============================================================ -->
+    <script>
+        // === БЛОК 17.1: ПЕРЕМЕННЫЕ И АВТОРИЗАЦИЯ ===
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token) window.location.href = '/';
+        document.getElementById('userInfo').textContent = `${user.name} (${user.role})`;
+        if (user.role === 'admin') {
+            document.getElementById('adminBtn').style.display = 'inline-block';
+        }
+
+        let devices = [];
+        let ws = null;
+        let history = [];
+        let historyIndex = -1;
+        let isCommandSending = false;
+
+        const output = document.getElementById('output');
+        const cmdInput = document.getElementById('cmdInput');
+
+        // === БЛОК 17.2: КООРДИНАТЫ ГОРОДОВ НА КАРТЕ (в %) ===
+        const CITY_COORDS = {
+            'Москва': { x: 17, y: 42 },
+            'Санкт-Петербург': { x: 14, y: 30 },
+            'Калининград': { x: 6, y: 32 },
+            'Казань': { x: 24, y: 44 },
+            'Нижний Новгород': { x: 22, y: 40 },
+            'Самара': { x: 27, y: 47 },
+            'Екатеринбург': { x: 33, y: 40 },
+            'Челябинск': { x: 33, y: 44 },
+            'Новосибирск': { x: 44, y: 42 },
+            'Красноярск': { x: 53, y: 42 },
+            'Омск': { x: 41, y: 42 },
+            'Владивосток': { x: 84, y: 55 },
+            'Хабаровск': { x: 80, y: 48 },
+            'Ростов-на-Дону': { x: 19, y: 52 },
+            'Краснодар': { x: 17, y: 55 },
+            'Ставрополь': { x: 21, y: 53 },
+            'Махачкала': { x: 26, y: 57 }
+        };
+
+        // === БЛОК 17.3: API-ХЕЛПЕР ===
+        async function api(path, options = {}) {
+            const res = await fetch(path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...(options.headers || {})
+                }
+            });
+            if (res.status === 401) {
+                localStorage.clear();
+                window.location.href = '/';
+                return null;
+            }
+            return res.json();
+        }
+
+        // === БЛОК 17.4: ВЫВОД В КОНСОЛЬ ===
+        function print(text) {
+            output.textContent += text + '\n';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // === БЛОК 17.5: ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ===
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.getElementById('panel-' + name).classList.add('active');
+            if (name === 'map') loadMap();
+        }
+
+        // === БЛОК 17.6: ЗАГРУЗКА СПИСКА СЕРВЕРОВ ===
+        async function loadServers() {
+            const servers = await api('/api/servers');
+            if (!servers) return;
+            devices = servers;
+            const select = document.getElementById('deviceSelect');
+            select.innerHTML = '<option value="">— Выберите сервер —</option>';
+            devices.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.name} (${d.host})`;
+                select.appendChild(opt);
+            });
+            print('✅ Серверы загружены: ' + devices.length);
+        }
+
+        // === БЛОК 17.7: ПОДКЛЮЧЕНИЕ К СЕРВЕРУ ===
+        function switchDevice() {
+            const id = document.getElementById('deviceSelect').value;
+            if (!id) { alert('Выберите сервер'); return; }
+            const device = devices.find(d => d.id == id);
+            if (!device) return;
+
+            const pass = document.getElementById('passwordInput').value.trim();
+            if (!pass) { alert('Введите пароль SSH'); return; }
+
+            document.getElementById('sshStatus').textContent = '⏳ Подключение...';
+            if (ws) ws.close();
+
+            ws = new WebSocket(`ws://localhost:8000/ws?device=${id}&token=${token}`);
+            ws.onopen = () => {
+                ws.send(pass);
+                document.getElementById('sshStatus').textContent = '✅ ' + device.name;
+                output.textContent = '';
+                historyIndex = -1;
+                print(`=== ${device.name} ===`);
+                print('Введите команду:');
+                cmdInput.disabled = false;
+                cmdInput.focus();
+            };
+            ws.onmessage = (e) => {
+                const data = e.data;
+                if (data === "__AUTH_FAILED__") {
+                    document.getElementById('sshStatus').textContent = '❌ Неверный пароль';
+                    print('❌ Ошибка: неверный пароль');
+                    return;
+                }
+                if (window._visualize && data.includes('ms')) {
+                    window._visualize = false;
+                    visualizeTraceroute(data);
+                    return;
+                }
+                print(data);
+            };
+            ws.onclose = () => {
+                if (!document.getElementById('sshStatus').textContent.includes('Подключение')) {
+                    document.getElementById('sshStatus').textContent = '❌ Отключено';
+                    cmdInput.disabled = true;
+                }
+            };
+        }
+
+        // === БЛОК 17.8: ОТПРАВКА КОМАНД ===
+        function sendCommand(cmd) {
+            if (isCommandSending) return;
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                print('❌ Нет подключения к серверу');
+                return;
+            }
+            isCommandSending = true;
+            ws.send(cmd);
+            history.push(cmd);
+            if (history.length > 100) history.shift();
+            historyIndex = -1;
+            setTimeout(() => { isCommandSending = false; }, 300);
+        }
+
+        // === БЛОК 17.9: МАКРОСЫ ===
+        function runMacro(command) {
+            print('⚡ ' + command);
+            sendCommand(command);
+        }
+
+        // === БЛОК 17.10: ВИЗУАЛИЗАЦИЯ МАРШРУТА ===
+        function visualizeRoute() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                print('❌ Нет подключения к серверу');
+                return;
+            }
+            print('⏳ Запрос маршрута до 8.8.8.8...');
+            window._visualize = true;
+            sendCommand('traceroute -n 8.8.8.8');
+        }
+
+        // === БЛОК 17.11: ПАРСЕР TRACEROUTE ===
+        function visualizeTraceroute(outputText) {
+            const lines = outputText.split('\n').filter(line => line.trim());
+            const hops = [];
+            let maxTime = 0;
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('traceroute to')) return;
+                const match = trimmed.match(/^(\d+)\s+(.+)/);
+                if (!match) return;
+
+                const num = parseInt(match[1]);
+                const rest = match[2];
+                const ipMatch = rest.match(/(\d+\.\d+\.\d+\.\d+|\*)/);
+                const ip = ipMatch ? ipMatch[1] : '*';
+                const timeMatch = rest.match(/([\d.]+)\s*ms/);
+                const time = timeMatch ? parseFloat(timeMatch[1]) : 0;
+
+                if (time > maxTime) maxTime = time;
+                hops.push({ num, ip, time });
+            });
+
+            if (hops.length === 0) {
+                print('❌ Не удалось распарсить маршрут');
+                print('Сырые данные:');
+                print(outputText);
+                return;
+            }
+
+            print('╔═══════════════════════════════════════════════════════════╗');
+            print('║                   🗺️ МАРШРУТ ДО 8.8.8.8                 ║');
+            print('╚═══════════════════════════════════════════════════════════╝');
+
+            hops.forEach(hop => {
+                const delay = hop.time > 0 ? hop.time.toFixed(1) : '❌';
+                const barLength = Math.floor((hop.time / (maxTime || 1)) * 20);
+                const bar = '█'.repeat(Math.min(barLength, 20));
+                let color = '🟢';
+                if (hop.time > 100) color = '🟡';
+                if (hop.time > 500 || hop.time === 0) color = '🔴';
+                print(`${color} Хоп ${String(hop.num).padStart(2)}: ${hop.ip.padEnd(15)} → ${String(delay).padStart(6)} мс ${bar}`);
+            });
+
+            print('╔═══════════════════════════════════════════════════════════╗');
+            print('🟢 < 100 мс  🟡 100-500 мс  🔴 > 500 мс или таймаут');
+            print('╚═══════════════════════════════════════════════════════════╝');
+        }
+
+        // === БЛОК 17.12: ИСТОРИЯ И АВТОДОПОЛНЕНИЕ КОМАНД ===
+        const COMMANDS = [
+            'ls', 'ls -la', 'ls -la /var/log',
+            'cd', 'cd /', 'cd /root', 'cd /etc',
+            'pwd', 'whoami', 'uptime', 'date',
+            'df -h', 'free -m', 'ps aux', 'top',
+            'ip addr', 'ip route', 'ping 8.8.8.8', 'traceroute google.com',
+            'systemctl status apache2', 'systemctl restart apache2',
+            'apt update', 'apt upgrade',
+            'cat /etc/os-release', 'uname -a', 'hostname'
+        ];
+
+        cmdInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const current = cmdInput.value;
+                if (!current.trim()) { cmdInput.value = COMMANDS[0]; return; }
+                const matches = COMMANDS.filter(cmd => cmd.startsWith(current));
+                if (matches.length === 1) {
+                    cmdInput.value = matches[0];
+                } else if (matches.length > 1) {
+                    print('Варианты: ' + matches.join(', '));
+                    let prefix = matches[0];
+                    for (let i = 1; i < matches.length; i++) {
+                        let j = 0;
+                        while (j < prefix.length && j < matches[i].length && prefix[j] === matches[i][j]) j++;
+                        prefix = prefix.slice(0, j);
+                    }
+                    if (prefix.length > current.length) cmdInput.value = prefix;
+                }
+                cmdInput.setSelectionRange(cmdInput.value.length, cmdInput.value.length);
+            }
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!history.length) return;
+                if (historyIndex > 0) historyIndex--;
+                else if (historyIndex === -1) historyIndex = history.length - 1;
+                cmdInput.value = history[historyIndex] || '';
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!history.length) return;
+                if (historyIndex < history.length - 1) historyIndex++;
+                else if (historyIndex === history.length - 1) {
+                    historyIndex = -1;
+                    cmdInput.value = '';
+                    return;
+                }
+                cmdInput.value = history[historyIndex] || '';
+            }
+
+            if (e.key === 'Enter') {
+                const cmd = cmdInput.value.trim();
+                if (!cmd) return;
+                print('> ' + cmd);
+                sendCommand(cmd);
+                cmdInput.value = '';
+            }
+        });
+
+        // === БЛОК 17.13: ЗАГРУЗКА КАРТЫ ===
+        async function loadMap() {
+            const servers = await api('/api/servers');
+            if (!servers) return;
+
+            const container = document.getElementById('mapContainer');
+            container.querySelectorAll('.map-point, .map-point-tooltip').forEach(el => el.remove());
+
+            let placed = 0;
+            servers.forEach(s => {
+                if (!s.city || !CITY_COORDS[s.city]) return;
+                const coords = CITY_COORDS[s.city];
+
+                // Точка
+                const point = document.createElement('div');
+                point.className = 'map-point green';
+                point.style.left = coords.x + '%';
+                point.style.top = coords.y + '%';
+                point.dataset.id = s.id;
+
+                // Подсказка
+                const tooltip = document.createElement('div');
+                tooltip.className = 'map-point-tooltip';
+                tooltip.style.left = coords.x + '%';
+                tooltip.style.top = coords.y + '%';
+                tooltip.innerHTML = `
+                    <b>${s.name}</b><br>
+                    🌐 ${s.host}:${s.port}<br>
+                    📍 ${s.region || '—'}${s.city ? ', ' + s.city : ''}<br>
+                    🟢 Доступен
+                `;
+
+                point.addEventListener('click', () => {
+                    document.getElementById('deviceSelect').value = point.dataset.id;
+                    showTab('console');
+                });
+
+                container.appendChild(point);
+                container.appendChild(tooltip);
+                placed++;
+            });
+
+            document.getElementById('mapStatus').textContent =
+                `На карте: ${placed} из ${servers.length} серверов • Обновлено: ${new Date().toLocaleTimeString()}`;
+        }
+
+        // === БЛОК 17.14: МОДАЛЬНОЕ ОКНО «ДОБАВИТЬ СЕРВЕР» ===
+        function openServerModal() {
+            document.getElementById('serverModal').classList.add('active');
+            ['srvName', 'srvHost', 'srvPass', 'srvCity'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('srvPort').value = '22';
+            document.getElementById('srvUser').value = 'root';
+            document.getElementById('srvRegion').value = '';
+            document.getElementById('serverError').textContent = '';
+        }
+        function closeServerModal() {
+            document.getElementById('serverModal').classList.remove('active');
+        }
+
+        async function saveServer() {
+            const data = {
+                name: document.getElementById('srvName').value.trim(),
+                host: document.getElementById('srvHost').value.trim(),
+                port: parseInt(document.getElementById('srvPort').value) || 22,
+                username: document.getElementById('srvUser').value.trim(),
+                password: document.getElementById('srvPass').value.trim(),
+                region: document.getElementById('srvRegion').value.trim(),
+                city: document.getElementById('srvCity').value.trim()
+            };
+
+            if (!data.name || !data.host || !data.username || !data.password) {
+                document.getElementById('serverError').textContent = 'Заполните все обязательные поля';
+                return;
+            }
+
+            const result = await api('/api/servers', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (result && result.status === 'ok') {
+                closeServerModal();
+                await loadServers();
+            } else {
+                document.getElementById('serverError').textContent = result?.detail || 'Ошибка';
+            }
+        }
+
+        async function deleteCurrentServer() {
+            const id = document.getElementById('deviceSelect').value;
+            if (!id) { alert('Выберите сервер для удаления'); return; }
+            const device = devices.find(d => d.id == id);
+            if (!confirm(`Удалить сервер "${device.name}"? Это действие необратимо.`)) return;
+
+            const result = await api('/api/servers/' + id, { method: 'DELETE' });
+            if (result && result.status === 'ok') {
+                if (ws) ws.close();
+                document.getElementById('passwordInput').value = '';
+                output.textContent = 'Ожидание подключения...';
+                await loadServers();
+            } else {
+                alert(result?.detail || 'Ошибка удаления');
+            }
+        }
+
+        // === БЛОК 17.15: КНОПКИ ШАПКИ ===
+        function goToAdmin() { window.location.href = '/admin'; }
+        async function doLogout() {
+            await api('/api/logout', { method: 'POST' });
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // === БЛОК 17.16: СТАРТ ===
+        loadServers();
+    </script>
+</body>
+</html>

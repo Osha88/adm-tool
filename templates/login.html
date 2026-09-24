@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход — ADM-Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1e1e1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+        }
+        .login-box {
+            background: #2a2a2a;
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+        }
+        .login-box h1 {
+            color: #00ff00;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            color: #00ff00;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1e1e1e;
+            color: #00ff00;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+        }
+        .form-group input:focus {
+            border-color: #00ff00;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #00ff00;
+            color: #1e1e1e;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #00cc00;
+        }
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .error {
+            color: #ff4444;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 15px;
+            min-height: 18px;
+        }
+        .footer {
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>🚀 ADM-Tool</h1>
+
+        <div class="form-group">
+            <label for="login">Логин</label>
+            <input type="text" id="login" autocomplete="username" autofocus />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" autocomplete="current-password" />
+        </div>
+
+        <button class="btn" id="loginBtn" onclick="doLogin()">Войти</button>
+
+        <div class="error" id="errorMsg"></div>
+
+        <div class="footer">Версия 1.0 • 2026</div>
+    </div>
+
+    <script>
+        const loginInput = document.getElementById('login');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // Отправка по Enter
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        async function doLogin() {
+            const loginValue = loginInput.value.trim();
+            const passwordValue = passwordInput.value.trim();
+
+            errorMsg.textContent = '';
+
+            if (!loginValue || !passwordValue) {
+                errorMsg.textContent = 'Введите логин и пароль';
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Проверка...';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        login: loginValue,
+                        password: passwordValue
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorMsg.textContent = data.detail || 'Ошибка входа';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Войти';
+                    return;
+                }
+
+                // Сохраняем токен и данные пользователя
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                // Редирект по роли
+                if (data.user.role === 'admin') {
+                    window.location.href = '/admin';
+                } else {
+                    window.location.href = '/index';
+                }
+
+            } catch (err) {
+                errorMsg.textContent = 'Ошибка соединения с сервером';
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Войти';
+            }
+        }
+    </script>
+</body>
+</html>

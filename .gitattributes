@@ -12,9 +12,8 @@
 *.md ident
 *.txt ident
 
-# Обработка окончаний строк
+# Обработка  text=auto
 * text=auto
-
 # Исключить из статистики
 venv/ linguist-vendored
 __pycache__/ linguist-generated
