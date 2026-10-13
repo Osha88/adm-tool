@@ -84,10 +84,28 @@
             <button onclick="loadMap()">🔄 Обновить сейчас</button>
             <span class="status" id="mapStatus">Автообновление: раз в 5 минут</span>
         </div>
-        <div class="map-wrapper">
-            <div class="map-container" id="mapContainer">
-                <img src="/static/russia.jpg" class="map-image" alt="Карта России" />
+
+        <!-- === БЛОК 5.1: КАРТА + ПАНЕЛЬ СЕРВЕРОВ === -->
+        <div class="map-layout">
+
+            <!-- Левая панель: все серверы -->
+            <div class="server-panel" id="serverPanel">
+                <div class="server-panel-empty">Серверов нет</div>
             </div>
+
+            <!-- Карта России + легенда -->
+            <div class="map-wrapper">
+                <div class="map-container" id="mapContainer">
+                    <img src="/static/russia.jpg" class="map-image" alt="Карта России" />
+                </div>
+
+                <div class="map-legend">
+                    <div class="legend-item"><span class="dot green"></span> ONLINE</div>
+                    <div class="legend-item"><span class="dot yellow"></span> WARNING</div>
+                    <div class="legend-item"><span class="dot red"></span> OFFLINE</div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -132,9 +150,35 @@
                 <input type="password" id="srvPassphrase" />
             </div>
 
+            <!-- === СТРАНА === -->
             <div class="form-group">
+                <label>Страна</label>
+                <select id="srvCountry" onchange="onCountryChange()">
+                    <option value="Россия">🇷🇺 Россия</option>
+                    <option value="Литва">🇱🇹 Литва</option>
+                    <option value="Латвия">🇱🇻 Латвия</option>
+                    <option value="Эстония">🇪🇪 Эстония</option>
+                    <option value="Беларусь">🇧🇾 Беларусь</option>
+                    <option value="Украина">🇺🇦 Украина</option>
+                    <option value="Казахстан">🇰🇿 Казахстан</option>
+                    <option value="Грузия">🇬🇪 Грузия</option>
+                    <option value="Армения">🇦🇲 Армения</option>
+                    <option value="Азербайджан">🇦🇿 Азербайджан</option>
+                    <option value="Узбекистан">🇺🇿 Узбекистан</option>
+                    <option value="Германия">🇩🇪 Германия</option>
+                    <option value="Нидерланды">🇳🇱 Нидерланды</option>
+                    <option value="Великобритания">🇬🇧 Великобритания</option>
+                    <option value="Франция">🇫🇷 Франция</option>
+                    <option value="США">🇺🇸 США</option>
+                    <option value="Китай">🇨🇳 Китай</option>
+                    <option value="Япония">🇯🇵 Япония</option>
+                </select>
+            </div>
+
+            <!-- === РЕГИОН (только для России) === -->
+            <div class="form-group" id="regionGroup">
                 <label>Регион</label>
-                <select id="srvRegion">
+                <select id="srvRegion" onchange="updateCityByRegion()">
                     <option value="">— Не указан —</option>
                     <option value="Центральный">Центральный</option>
                     <option value="Северо-Западный">Северо-Западный</option>
@@ -147,66 +191,11 @@
                 </select>
             </div>
 
+            <!-- === ГОРОД (заполняется JS) === -->
             <div class="form-group">
                 <label>Город</label>
                 <select id="srvCity">
                     <option value="">— Не указан —</option>
-                    <optgroup label="Центральный">
-                        <option value="Москва">Москва</option>
-                        <option value="Воронеж">Воронеж</option>
-                        <option value="Ярославль">Ярославль</option>
-                        <option value="Рязань">Рязань</option>
-                        <option value="Тула">Тула</option>
-                    </optgroup>
-                    <optgroup label="Северо-Западный">
-                        <option value="Санкт-Петербург">Санкт-Петербург</option>
-                        <option value="Калининград">Калининград</option>
-                        <option value="Мурманск">Мурманск</option>
-                        <option value="Архангельск">Архангельск</option>
-                        <option value="Череповец">Череповец</option>
-                    </optgroup>
-                    <optgroup label="Южный">
-                        <option value="Краснодар">Краснодар</option>
-                        <option value="Ростов-на-Дону">Ростов-на-Дону</option>
-                        <option value="Волгоград">Волгоград</option>
-                        <option value="Сочи">Сочи</option>
-                        <option value="Новороссийск">Новороссийск</option>
-                    </optgroup>
-                    <optgroup label="Северо-Кавказский">
-                        <option value="Ставрополь">Ставрополь</option>
-                        <option value="Владикавказ">Владикавказ</option>
-                        <option value="Махачкала">Махачкала</option>
-                        <option value="Пятигорск">Пятигорск</option>
-                        <option value="Нальчик">Нальчик</option>
-                    </optgroup>
-                    <optgroup label="Приволжский">
-                        <option value="Казань">Казань</option>
-                        <option value="Нижний Новгород">Нижний Новгород</option>
-                        <option value="Самара">Самара</option>
-                        <option value="Уфа">Уфа</option>
-                        <option value="Пермь">Пермь</option>
-                    </optgroup>
-                    <optgroup label="Уральский">
-                        <option value="Екатеринбург">Екатеринбург</option>
-                        <option value="Челябинск">Челябинск</option>
-                        <option value="Тюмень">Тюмень</option>
-                        <option value="Курган">Курган</option>
-                        <option value="Сургут">Сургут</option>
-                    </optgroup>
-                    <optgroup label="Сибирский">
-                        <option value="Новосибирск">Новосибирск</option>
-                        <option value="Красноярск">Красноярск</option>
-                        <option value="Омск">Омск</option>
-                        <option value="Барнаул">Барнаул</option>
-                        <option value="Иркутск">Иркутск</option>
-                    </optgroup>
-                    <optgroup label="Дальневосточный">
-                        <option value="Хабаровск">Хабаровск</option>
-                        <option value="Владивосток">Владивосток</option>
-                        <option value="Якутск">Якутск</option>
-                        <option value="Улан-Удэ">Улан-Удэ</option>
-                        <option value="Чита">Чита</option>
-                    </optgroup>
                 </select>
             </div>
 

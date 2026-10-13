@@ -63,7 +63,7 @@ def init_db():
         )
     """)
 
-    # --- Таблица servers (с поддержкой SSH-ключей) ---
+    # --- Таблица servers (с полем country) ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS servers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,6 +76,7 @@ def init_db():
             password_enc TEXT,
             private_key_enc TEXT,
             passphrase_enc TEXT,
+            country TEXT DEFAULT 'Россия',
             region TEXT,
             city TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -254,7 +255,7 @@ def get_servers_by_user(user_id: int):
     """Возвращает только серверы конкретного пользователя."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM servers WHERE user_id = ? ORDER BY name", (user_id,))
+    cursor.execute("SELECT * FROM servers WHERE user_id = ? ORDER BY country, name", (user_id,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -280,6 +281,7 @@ def add_server(
     password_enc: str = None,
     private_key_enc: str = None,
     passphrase_enc: str = None,
+    country: str = "Россия",
     region: str = None,
     city: str = None,
 ):
@@ -290,13 +292,13 @@ def add_server(
         INSERT INTO servers (
             user_id, name, host, port, username,
             auth_type, password_enc, private_key_enc, passphrase_enc,
-            region, city
+            country, region, city
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         user_id, name, host, port, username,
         auth_type, password_enc, private_key_enc, passphrase_enc,
-        region, city
+        country, region, city
     ))
     conn.commit()
     server_id = cursor.lastrowid

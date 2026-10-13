@@ -347,6 +347,10 @@ async def add_server(request: Request, user: dict = Depends(get_current_user)):
     port = data.get("port", 22)
     username = data.get("username", "").strip()
     auth_type = data.get("auth_type", "password").strip()
+
+    # === ПРАВКА 1: country ===
+    country = data.get("country", "Россия").strip()
+
     region = data.get("region", "").strip() or None
     city = data.get("city", "").strip() or None
 
@@ -384,6 +388,8 @@ async def add_server(request: Request, user: dict = Depends(get_current_user)):
         password_enc=password_enc,
         private_key_enc=private_key_enc,
         passphrase_enc=passphrase_enc,
+        # === ПРАВКА 2: country ===
+        country=country,
         region=region,
         city=city,
     )
