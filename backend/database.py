@@ -1,11 +1,16 @@
+# ============================================================
+# === БЛОК 1: ИМПОРТЫ И ПУТИ ===
+# ============================================================
 import sqlite3
 import os
 from datetime import datetime
 
-# === Путь к файлу базы (рядом с database.py) ===
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "adm-tool.db")
 
 
+# ============================================================
+# === БЛОК 2: ПОДКЛЮЧЕНИЕ К БАЗЕ ===
+# ============================================================
 def get_connection():
     """Возвращает соединение с базой данных."""
     conn = sqlite3.connect(DB_PATH)
@@ -13,12 +18,15 @@ def get_connection():
     return conn
 
 
+# ============================================================
+# === БЛОК 3: ИНИЦИАЛИЗАЦИЯ (ТАБЛИЦЫ И НАЧАЛЬНЫЕ ЗАПИСИ) ===
+# ============================================================
 def init_db():
     """Создаёт таблицы и начальные записи, если их ещё нет."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    # === Таблица settings ===
+    # --- Таблица settings ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
@@ -26,7 +34,7 @@ def init_db():
         )
     """)
 
-    # === Таблица users ===
+    # --- Таблица users ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +49,7 @@ def init_db():
         )
     """)
 
-    # === Таблица sessions ===
+    # --- Таблица sessions ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +63,7 @@ def init_db():
         )
     """)
 
-    # === Таблица servers (с привязкой к пользователю) ===
+    # --- Таблица servers (с поддержкой SSH-ключей) ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS servers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +72,10 @@ def init_db():
             host TEXT NOT NULL,
             port INTEGER DEFAULT 22,
             username TEXT NOT NULL,
-            password TEXT NOT NULL,
+            auth_type TEXT NOT NULL DEFAULT 'password',
+            password_enc TEXT,
+            private_key_enc TEXT,
+            passphrase_enc TEXT,
             region TEXT,
             city TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -72,21 +83,21 @@ def init_db():
         )
     """)
 
-    # === Таблица audit_log ===
+    # --- Таблица audit_log ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS audit_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             action TEXT NOT NULL,
             target TEXT,
+            details TEXT,
             ip TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     """)
 
-    # === Начальные записи ===
-
+    # --- Начальные записи ---
     # 1. Рабочий пароль (пустой)
     cursor.execute("""
         INSERT OR IGNORE INTO settings (key, value) VALUES ('work_password', '')
@@ -104,8 +115,9 @@ def init_db():
     conn.close()
 
 
-# === Утилиты для работы с пользователями ===
-
+# ============================================================
+# === БЛОК 4: ПОЛЬЗОВАТЕЛИ ===
+# ============================================================
 def get_user_by_login(login: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -166,8 +178,9 @@ def update_password(user_id: int, new_password: str):
     conn.close()
 
 
-# === Утилиты для работы с настройками ===
-
+# ============================================================
+# === БЛОК 5: НАСТРОЙКИ ===
+# ============================================================
 def get_setting(key: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -188,8 +201,9 @@ def set_setting(key: str, value: str):
     conn.close()
 
 
-# === Утилиты для работы с сессиями ===
-
+# ============================================================
+# === БЛОК 6: СЕССИИ ===
+# ============================================================
 def create_session(token: str, user_id: int, ip: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -233,8 +247,9 @@ def get_active_sessions():
     return [dict(r) for r in rows]
 
 
-# === Утилиты для работы с серверами (ЛИЧНЫЕ) ===
-
+# ============================================================
+# === БЛОК 7: СЕРВЕРЫ (ЛИЧНЫЕ ДЛЯ КАЖДОГО ПОЛЬЗОВАТЕЛЯ) ===
+# ============================================================
 def get_servers_by_user(user_id: int):
     """Возвращает только серверы конкретного пользователя."""
     conn = get_connection()
@@ -255,14 +270,34 @@ def get_server_by_id(server_id: int, user_id: int):
     return dict(row) if row else None
 
 
-def add_server(user_id: int, name: str, host: str, port: int, username: str, password: str, region: str = None, city: str = None):
+def add_server(
+    user_id: int,
+    name: str,
+    host: str,
+    port: int,
+    username: str,
+    auth_type: str = "password",
+    password_enc: str = None,
+    private_key_enc: str = None,
+    passphrase_enc: str = None,
+    region: str = None,
+    city: str = None,
+):
     """Добавляет сервер, привязанный к пользователю."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO servers (user_id, name, host, port, username, password, region, city)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (user_id, name, host, port, username, password, region, city))
+        INSERT INTO servers (
+            user_id, name, host, port, username,
+            auth_type, password_enc, private_key_enc, passphrase_enc,
+            region, city
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        user_id, name, host, port, username,
+        auth_type, password_enc, private_key_enc, passphrase_enc,
+        region, city
+    ))
     conn.commit()
     server_id = cursor.lastrowid
     conn.close()
@@ -278,15 +313,16 @@ def delete_server(server_id: int, user_id: int):
     conn.close()
 
 
-# === Утилиты для аудита ===
-
-def log_action(user_id: int, action: str, target: str = None, ip: str = None):
+# ============================================================
+# === БЛОК 8: АУДИТ ===
+# ============================================================
+def log_action(user_id: int, action: str, target: str = None, details: str = None, ip: str = None):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO audit_log (user_id, action, target, ip)
-        VALUES (?, ?, ?, ?)
-    """, (user_id, action, target, ip))
+        INSERT INTO audit_log (user_id, action, target, details, ip)
+        VALUES (?, ?, ?, ?, ?)
+    """, (user_id, action, target, details, ip))
     conn.commit()
     conn.close()
 
@@ -306,8 +342,9 @@ def get_audit_log(limit: int = 100):
     return [dict(r) for r in rows]
 
 
-# === Очистка старой истории (90 дней) ===
-
+# ============================================================
+# === БЛОК 9: ОЧИСТКА СТАРОЙ ИСТОРИИ (90 ДНЕЙ) ===
+# ============================================================
 def clean_old_audit_log():
     conn = get_connection()
     cursor = conn.cursor()
@@ -319,7 +356,9 @@ def clean_old_audit_log():
     conn.close()
 
 
-# === Инициализация при импорте ===
+# ============================================================
+# === БЛОК 10: ИНИЦИАЛИЗАЦИЯ ПРИ ЗАПУСКЕ ===
+# ============================================================
 if __name__ == "__main__":
     init_db()
     print("✅ База данных инициализирована")

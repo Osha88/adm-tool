@@ -1,0 +1,385 @@
+/* === БЛОК 1: ОБЩИЕ СТИЛИ === */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #1e1e1e;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* === БЛОК 2: ШАПКА === */
+.header {
+    background: #2a2a2a;
+    border-bottom: 1px solid #00ff00;
+    padding: 12px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.header h1 { font-size: 18px; }
+.header .user-info { font-size: 14px; color: #ffaa00; margin-right: 15px; }
+.header button {
+    background: #2a2a2a;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    border-radius: 4px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    margin-left: 8px;
+}
+.header button:hover { background: #00ff00; color: #1e1e1e; }
+
+/* === БЛОК 3: ВКЛАДКИ === */
+.tabs {
+    display: flex;
+    background: #222;
+    border-bottom: 1px solid #444;
+    padding: 0 30px;
+}
+.tab {
+    padding: 12px 24px;
+    cursor: pointer;
+    color: #888;
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+}
+.tab:hover { color: #00ff00; }
+.tab.active {
+    color: #00ff00;
+    border-bottom-color: #00ff00;
+}
+
+/* === БЛОК 4: ПАНЕЛИ === */
+.panel { display: none; flex: 1; flex-direction: column; }
+.panel.active { display: flex; }
+
+/* === БЛОК 5: ПАНЕЛЬ УПРАВЛЕНИЯ === */
+.controls {
+    padding: 12px 30px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #333;
+}
+.controls select,
+.controls input,
+.controls button {
+    padding: 8px 14px;
+    background: #2a2a2a;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+.controls button { cursor: pointer; }
+.controls button:hover { background: #00ff00; color: #1e1e1e; }
+.status { color: #ffaa00; font-size: 13px; }
+
+/* === БЛОК 6: МАКРОСЫ === */
+.macros {
+    padding: 10px 30px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #333;
+}
+.macros button {
+    padding: 6px 12px;
+    background: #2a2a2a;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+}
+.macros button:hover { background: #00ff00; color: #1e1e1e; }
+.macros button.danger { color: #ff4444; border-color: #ff4444; }
+.macros button.danger:hover { background: #ff4444; color: #1e1e1e; }
+.macros button.map-btn { color: #00ffff; border-color: #00ffff; }
+.macros button.map-btn:hover { background: #00ffff; color: #1e1e1e; }
+
+/* === БЛОК 7: КОНСОЛЬ === */
+.console-wrapper {
+    flex: 1;
+    margin: 15px 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 400px;
+    background: black;
+    border: 2px solid #00ff00;
+    transition: border-color 0.2s;
+}
+.console-wrapper.native-mode { border-color: #00ffff; }
+#terminal { flex: 1; overflow: hidden; }
+.mode-indicator {
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #00ff00;
+    border-top: 1px solid #333;
+    text-align: right;
+}
+.console-wrapper.native-mode .mode-indicator { color: #00ffff; }
+
+/* === БЛОК 8: КАРТА === */
+.map-wrapper {
+    flex: 1;
+    margin: 15px 30px;
+    position: relative;
+    background: #111;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+}
+.map-container {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+}
+.map-image {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    filter: invert(1) hue-rotate(90deg);
+    mix-blend-mode: screen;
+    opacity: 0.6;
+}
+
+/* === БЛОК 9: ТОЧКИ НА КАРТЕ === */
+.map-point {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    border: 2px solid #1e1e1e;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+    transition: transform 0.2s;
+}
+.map-point:hover {
+    transform: translate(-50%, -50%) scale(1.5);
+    z-index: 10;
+}
+.map-point.green { background: #00ff00; }
+.map-point.yellow { background: #ffaa00; }
+.map-point.red { background: #ff4444; }
+
+/* === БЛОК 10: ПОДСКАЗКА К ТОЧКЕ === */
+.map-point-tooltip {
+    position: absolute;
+    background: #2a2a2a;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translate(-50%, -120%);
+    display: none;
+    z-index: 20;
+    box-shadow: 0 0 12px rgba(0, 255, 0, 0.5);
+}
+.map-point:hover + .map-point-tooltip,
+.map-point-tooltip.visible { display: block; }
+
+/* === БЛОК 11: МОДАЛЬНОЕ ОКНО === */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+.modal.active { display: flex; }
+.modal-content {
+    background: #2a2a2a;
+    border: 1px solid #00ff00;
+    border-radius: 8px;
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-content h3 {
+    color: #00ff00;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+.form-group { margin-bottom: 15px; }
+.form-group label {
+    display: block;
+    color: #00ff00;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    background: #1e1e1e;
+    color: #00ff00;
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    outline: none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: #00ff00; }
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+/* === БЛОК 12: ПЕРЕКЛЮЧАТЕЛЬ ПАРОЛЬ/КЛЮЧ === */
+.auth-switch {
+    display: flex;
+    gap: 0;
+    margin-bottom: 15px;
+    border: 1px solid #00ff00;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.auth-switch button {
+    flex: 1;
+    padding: 10px;
+    background: #2a2a2a;
+    color: #00ff00;
+    border: none;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+.auth-switch button.active {
+    background: #00ff00;
+    color: #1e1e1e;
+    font-weight: bold;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+.modal-buttons button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+.btn-save {
+    background: #00ff00;
+    color: #1e1e1e;
+    border: none;
+    font-weight: bold;
+}
+.btn-save:hover { background: #00cc00; }
+.btn-cancel {
+    background: #2a2a2a;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+}
+.btn-cancel:hover { background: #00ff00; color: #1e1e1e; }
+.error { color: #ff4444; font-size: 12px; margin-top: 10px; }
+.hidden { display: none !important; }
+
+/* === БЛОК 13: КОНСОЛЬ + САЙДБАР === */
+.console-layout {
+    flex: 1;
+    display: flex;
+    gap: 15px;
+    margin: 15px 30px;
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.console-layout .console-wrapper {
+    flex: 1;
+    margin: 0;
+}
+
+/* === БЛОК 14: САЙДБАР === */
+.sidebar {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+}
+
+.sidebar-group {
+    background: #2a2a2a;
+    border: 1px solid #00ff00;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.sidebar-title {
+    color: #00ff00;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+}
+
+.sidebar-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.sidebar-buttons button {
+    padding: 10px 8px;
+    background: #1e1e1e;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.sidebar-buttons button:hover {
+    background: #00ff00;
+    color: #1e1e1e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
+}
+
+.sidebar-buttons button:active {
+    transform: translateY(0);
+}
+
+/* === Адаптив для узких экранов === */
+@media (max-width: 900px) {
+    .console-layout {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+    }
+}
